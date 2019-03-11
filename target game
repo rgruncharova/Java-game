@@ -1,0 +1,152 @@
+
+float objectX, objectY; // Initial position of the object
+float cannonLength = 40;  
+float angleAlpha = 45.0*PI/180.0; // initial angle = 45 degrees -> converted to radians
+float stepAlpha = 0.005; // step to change angleAlpha
+float gravity = 9.81;      // Gravity acceleration
+float time; 
+float timeStep = 1.0/60.0;  // Increment time by 1/60 every frame
+float windSpeed; // Strength of wind
+float explodePositionX; 
+float explodePositionY;
+float explosionStrength = 1;
+boolean  explode = false;
+boolean objectInMotion = false;
+float x,y; // position of the object
+float r = 10;   // radius of the object
+float speed =8.0; // speed of the object
+float targetDistance = 50; // distance from left boundary the target is positioned
+int score = 0;
+
+void  setup (){
+  size (1000,600);
+  objectX = width-20; // set initial position of the object
+  objectY = height/2;
+  windSpeed = random (-2.0, 2.0);
+  println("WindSpeed =", + windSpeed);
+}
+
+ 
+void draw(){
+  background(200);
+  drawGround();
+  drawTarget();
+  drawCannon();
+  aimCannon();
+  shootCannon();
+  drawProjectile();
+  drawScore();
+}
+
+void drawGround(){
+   fill ( 0,102,0); // set dark green
+   rect(0, height*5/9, width , height*4/9); 
+}
+
+void drawTarget(){
+ ellipseMode(RADIUS);
+for (int i = 10; i >0; i--){
+    if (i<5) {
+     fill(0);
+     stroke(200);
+    }
+    else{
+     fill(200);
+     stroke(0);
+    }
+  ellipse(targetDistance,height/2, 10*i, height/2/11*i);
+
+}
+stroke(200,0,0);
+line(targetDistance,height/11/2, targetDistance,height-height/11/2); 
+}
+
+void drawCannon(){
+  stroke ( 51,51,51); // set very dark grey color to draw the cannon
+  smooth();
+  strokeWeight(10);
+  line(objectX, objectY, objectX - cannonLength *cos(angleAlpha), objectY - cannonLength *sin(angleAlpha));
+  strokeWeight(3); 
+  fill(51,51,51);
+  rect(objectX, objectY, cannonLength/2, cannonLength/2);
+}
+
+void aimCannon(){
+   if (!objectInMotion)  
+    if ((keyPressed == true) && (key == CODED)) 
+        if (keyCode == UP) angleAlpha += stepAlpha;
+        else  if (keyCode == DOWN) angleAlpha -= stepAlpha;
+        else  if (keyCode == LEFT) objectX -= 1;
+        else  if (keyCode == RIGHT) objectX += 1;
+}
+
+void shootCannon(){
+  if ( (keyPressed == true) && (key == 's') ){  
+    objectInMotion = true;
+    x = objectX; 
+    y = objectY;
+    time=0.0;
+  }
+}
+
+void drawProjectile(){
+  if (objectInMotion){
+     x-=speed * cos(angleAlpha)*time; 
+     y-=speed * sin(angleAlpha)*time;
+     y+=0.5*gravity*time*time;
+     y -= windSpeed*time;
+     time+=timeStep; 
+     stroke(255,102,0);
+     fill(255,102,0); // orange color for the object
+     ellipseMode(RADIUS);
+
+      if (!explode){
+       pushMatrix();
+       translate(x,y);
+       rotate(angleAlpha-time*3);
+       rectMode(CENTER);
+       rect(0,0, 3*r,r);
+       rectMode(CORNER);
+       popMatrix();
+     }
+
+       if ((x<targetDistance) && (y>height/11/2 && y < height-height/11/2)){
+       explodePositionX = targetDistance;
+       explodePositionY = y;
+       explode = true;
+       objectInMotion = false; 
+       if(y>height/11/2*10 && y < height-height/11/2*10) score =100;
+       else if(y>height/11/2*9 && y < height-height/11/2*9) score =50;
+        else if(y>height/11/2*8 && y < height-height/11/2*8) score =20;
+        else score = 1;
+       }
+       
+     if (x<0) objectInMotion = false; 
+     } 
+     
+  drawExplosion(); 
+}
+
+void drawScore(){
+    println("Score = "+score);
+fill(0);
+rect(350,15,110,35);
+fill (255,0,255);
+text("Score = ",360,40);
+text(score,430,40);
+  
+
+}
+
+void drawExplosion() {
+if(explode){
+    noStroke();
+    fill(200, explosionStrength*1, 0); 
+    ellipse(explodePositionX, explodePositionY, explosionStrength, explosionStrength);
+    explosionStrength+=5;
+    if (explosionStrength>100){
+     explode=false; 
+      explosionStrength=1;
+      }
+    } 
+}
